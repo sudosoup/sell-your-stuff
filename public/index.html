@@ -3,52 +3,164 @@
 <head>
   <meta charset="UTF-8" />
   <title>Sell Your Stuff</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    crossorigin="anonymous"
+    referrerpolicy="no-referrer"
+  />
+  <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+    }
+  </style>
 </head>
-<body>
-  <div id="app"></div>
+<body class="bg-gray-100">
+  <div id="app" class="p-4 md:p-8"></div>
   <script>
-    const { useState, useEffect } = React;
+    const { useState } = React;
 
-    function App() {
-      const [items, setItems] = useState([]);
-      const [form, setForm] = useState({title:'', description:'', condition:'', category:'', location:'', photoUrl:''});
+    const sampleItems = [
+      {
+        id: 1,
+        title: 'Vintage Camera',
+        description: 'Old 35mm film camera in good condition',
+        photoUrl: 'https://via.placeholder.com/400x300?text=Camera',
+        platforms: [
+          { name: 'Facebook', status: 'listed' },
+          { name: 'Craigslist', status: 'pending' }
+        ]
+      },
+      {
+        id: 2,
+        title: 'Wooden Desk',
+        description: 'Sturdy oak desk with drawers',
+        photoUrl: 'https://via.placeholder.com/400x300?text=Desk',
+        platforms: [{ name: 'Facebook', status: 'listed' }]
+      },
+      {
+        id: 3,
+        title: 'Mountain Bike',
+        description: 'Trail-ready bike, needs tune-up',
+        photoUrl: 'https://via.placeholder.com/400x300?text=Bike',
+        platforms: [
+          { name: 'Craigslist', status: 'listed' },
+          { name: 'eBay', status: 'pending' }
+        ]
+      }
+    ];
 
-      useEffect(() => {
-        fetch('/api/items').then(res => res.json()).then(setItems);
-      }, []);
+    function PlatformBadge({ platform }) {
+      return React.createElement(
+        'span',
+        {
+          className:
+            'flex items-center text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full'
+        },
+        React.createElement('i', {
+          className:
+            (platform.status === 'listed'
+              ? 'fa-solid fa-check text-green-500'
+              : 'fa-solid fa-clock text-yellow-500') + ' mr-1'
+        }),
+        platform.name
+      );
+    }
 
-      const handleChange = e => setForm({...form, [e.target.name]: e.target.value});
-      const handleSubmit = e => {
-        e.preventDefault();
-        fetch('/api/items', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(form)
-        }).then(res => res.json()).then(item => {
-          setItems(items.concat(item));
-          setForm({title:'', description:'', condition:'', category:'', location:'', photoUrl:''});
-        });
-      };
-
-      return React.createElement('div', null,
-        React.createElement('h1', null, 'Sell Your Stuff'),
-        React.createElement('form', {onSubmit: handleSubmit},
-          ['title','description','condition','category','location','photoUrl'].map(field =>
-            React.createElement('div', {key: field},
-              React.createElement('input', {
-                name: field,
-                value: form[field],
-                onChange: handleChange,
-                placeholder: field
+    function ItemCard({ item }) {
+      return React.createElement(
+        'div',
+        {
+          className:
+            'bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col'
+        },
+        React.createElement('img', {
+          src: item.photoUrl,
+          alt: item.title,
+          className: 'w-full h-48 object-cover'
+        }),
+        React.createElement(
+          'div',
+          { className: 'p-4 flex-1 flex flex-col' },
+          React.createElement(
+            'h2',
+            { className: 'text-xl font-semibold mb-2' },
+            item.title
+          ),
+          React.createElement(
+            'p',
+            { className: 'text-gray-600 mb-3 flex-1' },
+            item.description
+          ),
+          React.createElement(
+            'div',
+            { className: 'flex flex-wrap gap-2 mb-3' },
+            item.platforms.map((platform) =>
+              React.createElement(PlatformBadge, {
+                key: platform.name,
+                platform
               })
             )
-          ),
-          React.createElement('button', {type: 'submit'}, 'Add Item')
+          )
         ),
-        React.createElement('ul', null,
-          items.map(item => React.createElement('li', {key: item.id}, item.title + ' - ' + item.status))
+        React.createElement(
+          'div',
+          { className: 'px-4 py-3 border-t flex justify-end gap-2' },
+          React.createElement(
+            'button',
+            {
+              className:
+                'bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded-md flex items-center gap-1'
+            },
+            React.createElement('i', { className: 'fa-solid fa-pen' }),
+            'Edit'
+          ),
+          React.createElement(
+            'button',
+            {
+              className:
+                'bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md flex items-center gap-1'
+            },
+            React.createElement('i', { className: 'fa-solid fa-trash' }),
+            'Delete'
+          ),
+          React.createElement(
+            'button',
+            {
+              className:
+                'bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded-md flex items-center gap-1'
+            },
+            React.createElement('i', { className: 'fa-solid fa-upload' }),
+            'Post'
+          )
+        )
+      );
+    }
+
+    function App() {
+      const [items] = useState(sampleItems);
+
+      return React.createElement(
+        'div',
+        { className: 'max-w-7xl mx-auto' },
+        React.createElement(
+          'h1',
+          { className: 'text-3xl font-bold mb-6 text-center' },
+          'Sell Your Stuff'
+        ),
+        React.createElement(
+          'div',
+          {
+            className:
+              'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
+          },
+          items.map((item) =>
+            React.createElement(ItemCard, { key: item.id, item })
+          )
         )
       );
     }
