@@ -13,6 +13,7 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script crossorigin src="https://unpkg.com/react@17/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@17/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <style>
     body {
       font-family: 'Inter', sans-serif;
@@ -21,151 +22,177 @@
 </head>
 <body class="bg-gray-100">
   <div id="app" class="p-4 md:p-8"></div>
-  <script>
-    const { useState } = React;
+  <script type="text/babel">
+    const { useState, useEffect } = React;
 
-    const sampleItems = [
-      {
-        id: 1,
-        title: 'Vintage Camera',
-        description: 'Old 35mm film camera in good condition',
-        photoUrl: 'https://via.placeholder.com/400x300?text=Camera',
-        platforms: [
-          { name: 'Facebook', status: 'listed' },
-          { name: 'Craigslist', status: 'pending' }
-        ]
-      },
-      {
-        id: 2,
-        title: 'Wooden Desk',
-        description: 'Sturdy oak desk with drawers',
-        photoUrl: 'https://via.placeholder.com/400x300?text=Desk',
-        platforms: [{ name: 'Facebook', status: 'listed' }]
-      },
-      {
-        id: 3,
-        title: 'Mountain Bike',
-        description: 'Trail-ready bike, needs tune-up',
-        photoUrl: 'https://via.placeholder.com/400x300?text=Bike',
-        platforms: [
-          { name: 'Craigslist', status: 'listed' },
-          { name: 'eBay', status: 'pending' }
-        ]
-      }
-    ];
-
-    function PlatformBadge({ platform }) {
-      return React.createElement(
-        'span',
-        {
-          className:
-            'flex items-center text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full'
-        },
-        React.createElement('i', {
-          className:
-            (platform.status === 'listed'
-              ? 'fa-solid fa-check text-green-500'
-              : 'fa-solid fa-clock text-yellow-500') + ' mr-1'
-        }),
-        platform.name
+    function ItemCard({ item, onDelete }) {
+      return (
+        <div className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col">
+          <img src={item.image} alt={item.title} className="w-full h-48 object-cover" />
+          <div className="p-4 flex-1 flex flex-col">
+            <h2 className="text-xl font-semibold mb-1">{item.title}</h2>
+            <p className="text-sm text-gray-500 mb-1">{item.condition}</p>
+            <p className="text-gray-600 mb-2 flex-1">{item.description}</p>
+            {item.notes && (
+              <p className="text-gray-500 text-sm mb-2">{item.notes}</p>
+            )}
+          </div>
+          <div className="px-4 py-3 border-t flex justify-end">
+            <button
+              onClick={() => onDelete(item.id)}
+              className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md flex items-center gap-1"
+            >
+              <i className="fa-solid fa-trash" /> Delete
+            </button>
+          </div>
+        </div>
       );
     }
 
-    function ItemCard({ item }) {
-      return React.createElement(
-        'div',
-        {
-          className:
-            'bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col'
-        },
-        React.createElement('img', {
-          src: item.photoUrl,
-          alt: item.title,
-          className: 'w-full h-48 object-cover'
-        }),
-        React.createElement(
-          'div',
-          { className: 'p-4 flex-1 flex flex-col' },
-          React.createElement(
-            'h2',
-            { className: 'text-xl font-semibold mb-2' },
-            item.title
-          ),
-          React.createElement(
-            'p',
-            { className: 'text-gray-600 mb-3 flex-1' },
-            item.description
-          ),
-          React.createElement(
-            'div',
-            { className: 'flex flex-wrap gap-2 mb-3' },
-            item.platforms.map((platform) =>
-              React.createElement(PlatformBadge, {
-                key: platform.name,
-                platform
-              })
-            )
-          )
-        ),
-        React.createElement(
-          'div',
-          { className: 'px-4 py-3 border-t flex justify-end gap-2' },
-          React.createElement(
-            'button',
-            {
-              className:
-                'bg-blue-500 hover:bg-blue-600 text-white text-sm px-3 py-1 rounded-md flex items-center gap-1'
-            },
-            React.createElement('i', { className: 'fa-solid fa-pen' }),
-            'Edit'
-          ),
-          React.createElement(
-            'button',
-            {
-              className:
-                'bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md flex items-center gap-1'
-            },
-            React.createElement('i', { className: 'fa-solid fa-trash' }),
-            'Delete'
-          ),
-          React.createElement(
-            'button',
-            {
-              className:
-                'bg-green-500 hover:bg-green-600 text-white text-sm px-3 py-1 rounded-md flex items-center gap-1'
-            },
-            React.createElement('i', { className: 'fa-solid fa-upload' }),
-            'Post'
-          )
-        )
+    function ItemForm({ onAdd }) {
+      const [title, setTitle] = useState('');
+      const [description, setDescription] = useState('');
+      const [condition, setCondition] = useState('Like New');
+      const [notes, setNotes] = useState('');
+      const [image, setImage] = useState(null);
+
+      const resizeImage = (file) => {
+        return new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const maxWidth = 400;
+              let width = img.width;
+              let height = img.height;
+              if (width > maxWidth) {
+                height *= maxWidth / width;
+                width = maxWidth;
+              }
+              canvas.width = width;
+              canvas.height = height;
+              const ctx = canvas.getContext('2d');
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL('image/jpeg'));
+            };
+            img.src = e.target.result;
+          };
+          reader.readAsDataURL(file);
+        });
+      };
+
+      const handleImage = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const data = await resizeImage(file);
+          setImage(data);
+        }
+      };
+
+      const handleSubmit = (e) => {
+        e.preventDefault();
+        if (!image || !title.trim()) return;
+        onAdd({
+          id: Date.now(),
+          title,
+          description,
+          condition,
+          notes,
+          image,
+        });
+        setTitle('');
+        setDescription('');
+        setCondition('Like New');
+        setNotes('');
+        setImage(null);
+        e.target.reset();
+      };
+
+      return (
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-4 rounded-lg shadow-md mb-6 flex flex-col gap-4"
+        >
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImage}
+            className="file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+            required
+          />
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Title"
+            className="border p-2 rounded w-full"
+            required
+          />
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Description"
+            className="border p-2 rounded w-full"
+          />
+          <select
+            value={condition}
+            onChange={(e) => setCondition(e.target.value)}
+            className="border p-2 rounded w-full"
+          >
+            <option>Like New</option>
+            <option>Great</option>
+            <option>Fair</option>
+            <option>Poor</option>
+          </select>
+          <textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Notes (optional)"
+            className="border p-2 rounded w-full"
+          />
+          <button
+            type="submit"
+            className="self-end bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded"
+          >
+            Add Item
+          </button>
+        </form>
       );
     }
 
     function App() {
-      const [items] = useState(sampleItems);
+      const [items, setItems] = useState([]);
 
-      return React.createElement(
-        'div',
-        { className: 'max-w-7xl mx-auto' },
-        React.createElement(
-          'h1',
-          { className: 'text-3xl font-bold mb-6 text-center' },
-          'Sell Your Stuff'
-        ),
-        React.createElement(
-          'div',
-          {
-            className:
-              'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6'
-          },
-          items.map((item) =>
-            React.createElement(ItemCard, { key: item.id, item })
-          )
-        )
+      useEffect(() => {
+        const stored = localStorage.getItem('inventoryItems');
+        if (stored) setItems(JSON.parse(stored));
+      }, []);
+
+      useEffect(() => {
+        localStorage.setItem('inventoryItems', JSON.stringify(items));
+      }, [items]);
+
+      const addItem = (item) => setItems((prev) => [...prev, item]);
+      const deleteItem = (id) =>
+        setItems((prev) => prev.filter((item) => item.id !== id));
+
+      return (
+        <div className="max-w-7xl mx-auto">
+          <h1 className="text-3xl font-bold mb-6 text-center">Sell Your Stuff</h1>
+          <ItemForm onAdd={addItem} />
+          <div className="overflow-y-auto max-h-[70vh]">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              {items.map((item) => (
+                <ItemCard key={item.id} item={item} onDelete={deleteItem} />
+              ))}
+            </div>
+          </div>
+        </div>
       );
     }
 
-    ReactDOM.render(React.createElement(App), document.getElementById('app'));
+    ReactDOM.render(<App />, document.getElementById('app'));
   </script>
 </body>
 </html>
