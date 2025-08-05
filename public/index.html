@@ -216,8 +216,18 @@
       };
       const deleteItem = (id) =>
         setItems((prev) => prev.filter((item) => item.id !== id));
-      const postToCraigslist = (data) => {
-        console.log('Post to Craigslist:', data);
+      const postToCraigslist = async (data) => {
+        try {
+          await fetch('/api/craigslist', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(data),
+          });
+        } catch (err) {
+          console.error('Failed to post to Craigslist', err);
+        }
       };
 
       return (

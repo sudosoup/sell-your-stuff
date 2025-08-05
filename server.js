@@ -1,6 +1,7 @@
 const express = require('express');
 const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
+const { spawn } = require('child_process');
 
 const app = express();
 const db = new sqlite3.Database(path.join(__dirname, 'data.db'));
@@ -39,6 +40,15 @@ app.post('/api/items', (req, res) => {
       res.json(row);
     });
   });
+});
+
+app.post('/api/craigslist', (req, res) => {
+  const script = path.join(__dirname, 'craigslistPoster.js');
+  const child = spawn('node', [script], { stdio: 'inherit' });
+  child.on('error', (err) => {
+    console.error('Failed to start craigslist script:', err);
+  });
+  res.json({ status: 'started' });
 });
 
 const PORT = process.env.PORT || 3000;
