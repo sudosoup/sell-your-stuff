@@ -25,7 +25,7 @@
   <script type="text/babel">
     const { useState, useEffect } = React;
 
-    function ItemCard({ item, onDelete }) {
+    function ItemCard({ item, onDelete, onPost }) {
       return (
         <div className="bg-white rounded-2xl shadow-lg overflow-hidden flex flex-col">
           <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
@@ -43,7 +43,21 @@
               <p className="text-gray-500 text-sm mb-2">{item.notes}</p>
             )}
           </div>
-          <div className="px-4 py-3 border-t flex justify-end">
+          <div className="px-4 py-3 border-t flex justify-end gap-2">
+            <button
+              onClick={() =>
+                onPost({
+                  title: item.title,
+                  description: item.description,
+                  condition: item.condition,
+                  notes: item.notes,
+                  image: item.image,
+                })
+              }
+              className="bg-purple-500 hover:bg-purple-600 text-white text-sm px-3 py-1 rounded-md flex items-center gap-1"
+            >
+              <i className="fa-brands fa-craigslist" /> Post to Craigslist
+            </button>
             <button
               onClick={() => onDelete(item.id)}
               className="bg-red-500 hover:bg-red-600 text-white text-sm px-3 py-1 rounded-md flex items-center gap-1"
@@ -202,6 +216,9 @@
       };
       const deleteItem = (id) =>
         setItems((prev) => prev.filter((item) => item.id !== id));
+      const postToCraigslist = (data) => {
+        console.log('Post to Craigslist:', data);
+      };
 
       return (
         <div className="max-w-7xl mx-auto">
@@ -222,7 +239,12 @@
           <div className="overflow-y-auto max-h-[70vh]">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {items.map((item) => (
-                <ItemCard key={item.id} item={item} onDelete={deleteItem} />
+                <ItemCard
+                  key={item.id}
+                  item={item}
+                  onDelete={deleteItem}
+                  onPost={postToCraigslist}
+                />
               ))}
             </div>
           </div>
