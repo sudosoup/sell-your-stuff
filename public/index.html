@@ -196,9 +196,13 @@
       );
     }
 
-    function App() {
-      const [items, setItems] = useState([]);
-      const [showForm, setShowForm] = useState(false);
+      function App() {
+        const [items, setItems] = useState([]);
+        const [showForm, setShowForm] = useState(false);
+        const [creds, setCreds] = useState(() => {
+          const stored = localStorage.getItem('craigslistCreds');
+          return stored ? JSON.parse(stored) : { email: '', password: '' };
+        });
 
       useEffect(() => {
         const stored = localStorage.getItem('inventoryItems');
@@ -208,6 +212,10 @@
       useEffect(() => {
         localStorage.setItem('inventoryItems', JSON.stringify(items));
       }, [items]);
+
+      useEffect(() => {
+        localStorage.setItem('craigslistCreds', JSON.stringify(creds));
+      }, [creds]);
 
       const addItem = (item) => {
         setItems((prev) => [...prev, item]);
@@ -223,7 +231,7 @@
             headers: {
               'Content-Type': 'application/json',
             },
-            body: JSON.stringify(payload),
+            body: JSON.stringify({ ...payload, email: creds.email, password: creds.password }),
           });
         } catch (err) {
           console.error('Failed to post to Craigslist', err);
@@ -233,6 +241,22 @@
       return (
         <div className="max-w-7xl mx-auto">
           <h1 className="text-3xl font-bold mb-6 text-center">Sell Your Stuff</h1>
+          <div className="mb-4 flex gap-2">
+            <input
+              type="text"
+              value={creds.email}
+              onChange={(e) => setCreds({ ...creds, email: e.target.value })}
+              placeholder="Craigslist Email"
+              className="border p-2 rounded flex-1"
+            />
+            <input
+              type="password"
+              value={creds.password}
+              onChange={(e) => setCreds({ ...creds, password: e.target.value })}
+              placeholder="Password"
+              className="border p-2 rounded flex-1"
+            />
+          </div>
           <div className="mb-4 flex justify-end">
             <button
               onClick={() => setShowForm(true)}
