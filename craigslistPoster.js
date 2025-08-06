@@ -16,10 +16,18 @@ const { chromium } = require('playwright');
   await page.fill('#inputPassword', password);
   await page.click('button[type="submit"]');
 
-  // After login, navigate to post form
-  await page.goto('https://post.craigslist.org/c/sfo');
+  // After login, navigate to main post page
+  await page.goto('https://post.craigslist.org/');
 
-  // Add further steps later...
+  // Select the desired location (e.g., San Francisco Bay Area)
+  await page.click('a[href*="/c/sfo"]');
+
+  // Choose the posting category (e.g., for sale by owner)
+  await page.click('input[value="fso"]');
+  await page.click('button[type="submit"]');
+
+  // Pause so we can inspect the state in the Playwright inspector
+  await page.pause();
 
   await browser.close();
 })();
