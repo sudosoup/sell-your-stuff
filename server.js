@@ -43,12 +43,14 @@ app.post('/api/items', (req, res) => {
 });
 
 app.post('/api/craigslist', (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, ...itemData } = req.body;
   if (!email || !password) {
     return res.status(400).json({ error: 'Missing credentials' });
   }
   const script = path.join(__dirname, 'craigslistPoster.js');
-  const child = spawn('node', [script, email, password], { stdio: 'inherit' });
+  // Pass email, password, and itemData as JSON string
+  const payload = JSON.stringify({ email, password, item: itemData });
+  const child = spawn('node', [script, payload], { stdio: 'inherit' });
   child.on('error', (err) => {
     console.error('Failed to start craigslist script:', err);
   });
